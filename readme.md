@@ -1,0 +1,1 @@
+EventPulse is a NestJS-based event processing system where distributed agents continuously generate events, a central processing service evaluates those events against configurable rules, and historical rule matches are stored for efficient reporting.
