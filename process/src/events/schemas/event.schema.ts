@@ -19,6 +19,13 @@ export class Event {
 
   @Prop({
     required: true,
+    unique: true,
+    index: true,
+  })
+  eventId: string;
+
+  @Prop({
+    required: true,
     index: true,
   })
   agentId: string;

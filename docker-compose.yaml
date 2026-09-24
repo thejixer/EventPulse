@@ -29,6 +29,16 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     volumes:
       - mongodb_data:/data/db
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'mongosh --quiet --username "$${MONGO_INITDB_ROOT_USERNAME}" --password "$${MONGO_INITDB_ROOT_PASSWORD}" --authenticationDatabase admin --eval "db.adminCommand(''ping'').ok" | grep 1',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   mongo-express:
     image: mongo-express:1
@@ -52,11 +62,19 @@ services:
     restart: unless-stopped
     ports:
       - '6379:6379'
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a "$${REDIS_PASSWORD}" ping | grep PONG']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   redisinsight:
     image: redis/redisinsight:latest
@@ -84,10 +102,16 @@ services:
     environment:
       MONGODB_URI: mongodb://eventpulse:${MONGO_ROOT_PASSWORD}@mongodb:27017/eventpulse?authSource=admin
       PORT: ${PROCESS_PORT}
+      RABBITMQ_URL: amqp://eventpulse:${RABBITMQ_PASSWORD}@rabbitmq:5672
     ports:
       - '${PROCESS_PORT}:${PROCESS_PORT}'
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   rabbitmq_data:

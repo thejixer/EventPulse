@@ -7,9 +7,12 @@ import {
   RABBITMQ_ROUTING_KEY,
 } from './event-producer.constants';
 import { ConfigService } from '@nestjs/config';
+import { v4 as uuidv4 } from 'uuid';
+
 const EVENT_INTERVAL_MS = 200;
 
 interface AgentEvent {
+  eventId: string;
   agentId: string;
   name: string;
   value: number;
@@ -89,6 +92,7 @@ export class EventProducerService implements OnModuleInit {
 
     const event: AgentEvent = {
       agentId: this.agentId,
+      eventId: uuidv4(),
       name,
       value: faker.number.float({
         min: 0,
