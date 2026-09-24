@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { RuleSchema, Rule } from './schemas/rule.schema';
+import { Rule, RuleSchema } from './schemas/rule.schema';
+import { RulesController } from './rule.controller';
+import { RulesService } from './rule.service';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -10,5 +13,8 @@ import { RuleSchema, Rule } from './schemas/rule.schema';
       },
     ]),
   ],
+  controllers: [RulesController],
+  providers: [RulesService],
+  exports: [RulesService],
 })
 export class RulesModule {}
