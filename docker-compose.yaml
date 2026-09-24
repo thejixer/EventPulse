@@ -62,6 +62,14 @@ services:
       - '5540:5540'
     volumes:
       - redisinsight_data:/data
+  agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    environment:
+      RABBITMQ_URL: amqp://eventpulse:${RABBITMQ_PASSWORD}@rabbitmq:5672
+    depends_on:
+      - rabbitmq
 
 volumes:
   rabbitmq_data:
