@@ -68,9 +68,9 @@ export class RuleMatchesController {
 
   @Get(':id/statistics')
   @ApiOperation({
-    summary: 'Get rule statistics by agent',
+    summary: 'Get rule occurrence counts by agent',
     description:
-      'Returns total rule occurrences per agent, ordered by occurrence count. Use authoritative=true to calculate from MongoDB and reconcile the Redis read model.',
+      'Returns the total number of historical rule occurrences grouped by agent and ordered by occurrence count.',
   })
   @ApiParam({
     name: 'id',
@@ -78,7 +78,7 @@ export class RuleMatchesController {
     example: '6ab65d51cd101ddedbfe847e',
   })
   @ApiOkResponse({
-    description: 'Rule statistics grouped by agent',
+    description: 'Historical rule occurrence counts grouped by agent',
     type: StatisticsResponseDto,
   })
   @ApiBadRequestResponse({
@@ -87,8 +87,7 @@ export class RuleMatchesController {
   @ApiNotFoundResponse({
     description: 'Rule not found',
   })
-  async getStatistics(@Param('id') id: string): Promise<StatisticsResponseDto> {
-    console.log('controller called');
+  async getRuleOccurrenceCounts(@Param('id') id: string): Promise<StatisticsResponseDto> {
     this.rulesService.validateObjectId(id);
 
     const agents = await this.ruleMatchesService.getRuleOccurrenceCountsByAgents(id);
