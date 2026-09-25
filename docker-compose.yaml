@@ -103,6 +103,7 @@ services:
       MONGODB_URI: mongodb://eventpulse:${MONGO_ROOT_PASSWORD}@mongodb:27017/eventpulse?authSource=admin
       PORT: ${PROCESS_PORT}
       RABBITMQ_URL: amqp://eventpulse:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
     ports:
       - '${PROCESS_PORT}:${PROCESS_PORT}'
     depends_on:

@@ -1,17 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { MongoServerError } from 'mongodb';
 import { RuleMatch, RuleMatchDocument } from './schemas/rule-match.schema';
 import { RuleDocument } from '../rules/schemas/rule.schema';
 import { IncomingEventDto } from '../events/dto/incoming-event.dto';
-import { MongoServerError } from 'mongodb';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class RuleMatchesService {
   private readonly logger = new Logger(RuleMatchesService.name);
+
   constructor(
     @InjectModel(RuleMatch.name)
     private readonly ruleMatchModel: Model<RuleMatchDocument>,
+    private readonly redisService: RedisService,
   ) {}
 
   async create(
@@ -21,8 +24,10 @@ export class RuleMatchesService {
     ruleMatch: RuleMatchDocument;
     created: boolean;
   }> {
+    let createdRuleMatch: RuleMatchDocument;
+
     try {
-      const createdRuleMatch = await this.ruleMatchModel.create({
+      createdRuleMatch = await this.ruleMatchModel.create({
         eventId: event.eventId,
         ruleId: rule._id,
         ruleVersion: rule.version,
@@ -36,10 +41,6 @@ export class RuleMatchesService {
         },
       });
       this.logger.debug(`Created rule match eventId=${event.eventId} ruleId=${rule._id} ruleVersion=${rule.version}`);
-      return {
-        ruleMatch: createdRuleMatch,
-        created: true,
-      };
     } catch (error) {
       if (!this.isDuplicateMatch(error)) throw error;
 
@@ -51,12 +52,29 @@ export class RuleMatchesService {
         .exec();
 
       if (!existingMatch) throw error;
+
       this.logger.debug(`Rule match already exists eventId=${event.eventId} ruleId=${rule._id}`);
+
       return {
         ruleMatch: existingMatch,
         created: false,
       };
     }
+
+    const redisKey = `rule:${rule._id}:agent:${event.agentId}`;
+
+    try {
+      await this.redisService.increment(redisKey);
+    } catch (error) {
+      this.logger.error(
+        `Failed to update Redis counter key=${redisKey}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+
+    return {
+      ruleMatch: createdRuleMatch,
+      created: true,
+    };
   }
 
   private isDuplicateMatch(error: unknown): boolean {
