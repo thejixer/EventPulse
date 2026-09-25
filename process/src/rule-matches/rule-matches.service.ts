@@ -129,6 +129,39 @@ export class RuleMatchesService {
       .exec();
   }
 
+  async getRuleOccurrenceCountsByAgents(ruleId: string): Promise<{ agentId: string; count: number }[]> {
+    return this.ruleMatchModel
+      .aggregate([
+        {
+          $match: {
+            ruleId: new Types.ObjectId(ruleId),
+          },
+        },
+        {
+          $group: {
+            _id: '$agentId',
+            count: {
+              $sum: 1,
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            agentId: '$_id',
+            count: 1,
+          },
+        },
+        {
+          $sort: {
+            count: -1,
+            agentId: 1,
+          },
+        },
+      ])
+      .exec();
+  }
+
   private isDuplicateMatch(error: unknown): boolean {
     if (!(error instanceof MongoServerError)) return false;
 
