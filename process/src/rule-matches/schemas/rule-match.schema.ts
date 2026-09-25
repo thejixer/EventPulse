@@ -13,6 +13,7 @@ export class RuleSnapshot {
     trim: true,
   })
   name: string;
+
   @Prop({
     required: true,
     enum: Object.values(EventName),
@@ -75,3 +76,5 @@ export class RuleMatch {
 export const RuleMatchSchema = SchemaFactory.createForClass(RuleMatch);
 // for idempotency of rule match submition
 RuleMatchSchema.index({ eventId: 1, ruleId: 1 }, { unique: true });
+// Optimizes rule occurrence queries by time range
+RuleMatchSchema.index({ ruleId: 1, timestamp: 1 });

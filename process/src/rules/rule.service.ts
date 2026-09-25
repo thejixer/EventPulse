@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreateRuleDto } from './dto/create-rule.dto';
@@ -12,9 +8,7 @@ import { EventName } from '../types/event-types';
 
 @Injectable()
 export class RulesService {
-  constructor(
-    @InjectModel(Rule.name) private readonly ruleModel: Model<RuleDocument>,
-  ) {}
+  constructor(@InjectModel(Rule.name) private readonly ruleModel: Model<RuleDocument>) {}
 
   async create(createRuleDto: CreateRuleDto): Promise<RuleDocument> {
     return this.ruleModel.create(createRuleDto);
@@ -35,12 +29,7 @@ export class RulesService {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
-      this.ruleModel
-        .find()
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
+      this.ruleModel.find().sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
       this.ruleModel.countDocuments().exec(),
     ]);
 
@@ -67,10 +56,7 @@ export class RulesService {
     return rule;
   }
 
-  async update(
-    id: string,
-    updateRuleDto: UpdateRuleDto,
-  ): Promise<RuleDocument> {
+  async update(id: string, updateRuleDto: UpdateRuleDto): Promise<RuleDocument> {
     this.validateObjectId(id);
 
     const rule = await this.ruleModel
@@ -106,7 +92,7 @@ export class RulesService {
     return this.ruleModel.find({ eventName }).exec();
   }
 
-  private validateObjectId(id: string): void {
+  validateObjectId(id: string): void {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid rule id "${id}"`);
     }

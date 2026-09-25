@@ -1,24 +1,17 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
-import { RulesService } from './rule.service'
+import { RulesService } from './rule.service';
 import { RulesPaginationDto } from './dto/rule-pagination.dto';
 
 @ApiTags('Rules')
@@ -75,10 +68,7 @@ export class RulesController {
   @ApiResponse({ status: 200, description: 'Rule updated successfully.' })
   @ApiResponse({ status: 400, description: 'Invalid rule data or ID.' })
   @ApiResponse({ status: 404, description: 'Rule not found.' })
-  update(
-    @Param('id') id: string,
-    @Body() updateRuleDto: UpdateRuleDto,
-  ) {
+  update(@Param('id') id: string, @Body() updateRuleDto: UpdateRuleDto) {
     if (Object.keys(updateRuleDto).length === 0) {
       throw new BadRequestException('At least one field must be provided');
     }

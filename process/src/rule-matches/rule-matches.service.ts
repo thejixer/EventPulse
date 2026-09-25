@@ -6,6 +6,7 @@ import { RuleMatch, RuleMatchDocument } from './schemas/rule-match.schema';
 import { RuleDocument } from '../rules/schemas/rule.schema';
 import { IncomingEventDto } from '../events/dto/incoming-event.dto';
 import { RedisService } from '../redis/redis.service';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class RuleMatchesService {
@@ -75,6 +76,57 @@ export class RuleMatchesService {
       ruleMatch: createdRuleMatch,
       created: true,
     };
+  }
+
+  async getOccurrences(
+    ruleId: string,
+    from: Date,
+    to: Date,
+  ): Promise<
+    {
+      agentId: string;
+      occurrences: Date[];
+    }[]
+  > {
+    return this.ruleMatchModel
+      .aggregate([
+        {
+          $match: {
+            ruleId: new Types.ObjectId(ruleId),
+            timestamp: {
+              $gte: from,
+              $lte: to,
+            },
+          },
+        },
+        {
+          $sort: {
+            agentId: 1,
+            timestamp: 1,
+          },
+        },
+        {
+          $group: {
+            _id: '$agentId',
+            occurrences: {
+              $push: '$timestamp',
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            agentId: '$_id',
+            occurrences: 1,
+          },
+        },
+        {
+          $sort: {
+            agentId: 1,
+          },
+        },
+      ])
+      .exec();
   }
 
   private isDuplicateMatch(error: unknown): boolean {

@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RuleMatchSchema, RuleMatch } from './schemas/rule-match.schema';
 import { RuleMatchesService } from './rule-matches.service';
+import { RulesModule } from '../rules/rules.module';
+import { RuleMatchesController } from './rule-matches.controller';
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -10,7 +12,9 @@ import { RuleMatchesService } from './rule-matches.service';
         schema: RuleMatchSchema,
       },
     ]),
+    RulesModule,
   ],
+  controllers: [RuleMatchesController],
   providers: [RuleMatchesService],
   exports: [RuleMatchesService],
 })
