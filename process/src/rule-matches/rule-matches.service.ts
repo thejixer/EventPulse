@@ -5,7 +5,7 @@ import { MongoServerError } from 'mongodb';
 import { RuleMatch, RuleMatchDocument } from './schemas/rule-match.schema';
 import { RuleDocument } from '../rules/schemas/rule.schema';
 import { IncomingEventDto } from '../events/dto/incoming-event.dto';
-import { RedisService } from '../redis/redis.service';
+
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -15,7 +15,6 @@ export class RuleMatchesService {
   constructor(
     @InjectModel(RuleMatch.name)
     private readonly ruleMatchModel: Model<RuleMatchDocument>,
-    private readonly redisService: RedisService,
   ) {}
 
   async create(
@@ -60,16 +59,6 @@ export class RuleMatchesService {
         ruleMatch: existingMatch,
         created: false,
       };
-    }
-
-    const redisKey = `rule:${rule._id}:agent:${event.agentId}`;
-
-    try {
-      await this.redisService.increment(redisKey);
-    } catch (error) {
-      this.logger.error(
-        `Failed to update Redis counter key=${redisKey}: ${error instanceof Error ? error.message : String(error)}`,
-      );
     }
 
     return {

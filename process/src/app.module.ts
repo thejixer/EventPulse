@@ -4,7 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { RulesModule } from './rules/rules.module';
 import { EventsModule } from './events/events.module';
 import { RuleMatchesModule } from './rule-matches/rule-matches.module';
-import { RedisModule } from './redis/redis.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -19,7 +19,6 @@ import { RedisModule } from './redis/redis.module';
     RulesModule,
     EventsModule,
     RuleMatchesModule,
-    RedisModule,
   ],
 })
 export class AppModule {}
