@@ -8,24 +8,29 @@ import { Model, Types } from 'mongoose';
 import { CreateRuleDto } from './dto/create-rule.dto';
 import { UpdateRuleDto } from './dto/update-rule.dto';
 import { Rule, RuleDocument } from './schemas/rule.schema';
+import { EventName } from '../types/event-types';
 
 @Injectable()
 export class RulesService {
-  constructor(@InjectModel(Rule.name) private readonly ruleModel: Model<RuleDocument>) { }
-  
+  constructor(
+    @InjectModel(Rule.name) private readonly ruleModel: Model<RuleDocument>,
+  ) {}
+
   async create(createRuleDto: CreateRuleDto): Promise<RuleDocument> {
     return this.ruleModel.create(createRuleDto);
   }
 
-  async findAll(page = 1, limit = 20): Promise<{
+  async findAll(
+    page = 1,
+    limit = 20,
+  ): Promise<{
     data: RuleDocument[];
     meta: {
       page: number;
       limit: number;
       total: number;
       totalPages: number;
-    }
-
+    };
   }> {
     const skip = (page - 1) * limit;
 
@@ -46,7 +51,7 @@ export class RulesService {
         limit,
         total,
         totalPages: Math.ceil(total / limit),
-      }
+      },
     };
   }
 
@@ -62,8 +67,10 @@ export class RulesService {
     return rule;
   }
 
-  async update(id: string, updateRuleDto: UpdateRuleDto): Promise<RuleDocument> {
-    
+  async update(
+    id: string,
+    updateRuleDto: UpdateRuleDto,
+  ): Promise<RuleDocument> {
     this.validateObjectId(id);
 
     const rule = await this.ruleModel
@@ -83,7 +90,7 @@ export class RulesService {
       .exec();
 
     if (!rule) throw new NotFoundException(`Rule with id "${id}" not found`);
-    
+
     return rule;
   }
 
@@ -93,7 +100,10 @@ export class RulesService {
     const result = await this.ruleModel.findByIdAndDelete(id).exec();
 
     if (!result) throw new NotFoundException(`Rule with id "${id}" not found`);
-    
+  }
+
+  async findByEventName(eventName: EventName): Promise<RuleDocument[]> {
+    return this.ruleModel.find({ eventName }).exec();
   }
 
   private validateObjectId(id: string): void {

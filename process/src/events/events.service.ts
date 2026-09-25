@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { MongoServerError } from 'mongodb';
@@ -7,6 +7,7 @@ import { Event, EventDocument } from './schemas/event.schema';
 
 @Injectable()
 export class EventsService {
+  private readonly logger = new Logger(EventsService.name);
   constructor(
     @InjectModel(Event.name)
     private readonly eventModel: Model<EventDocument>,
@@ -24,6 +25,7 @@ export class EventsService {
         value: event.value,
         timestamp: new Date(event.timestamp),
       });
+      this.logger.debug(`Created event eventId=${event.eventId} agentId=${event.agentId}`);
 
       return {
         event: createdEvent,
@@ -31,13 +33,11 @@ export class EventsService {
       };
     } catch (error) {
       if (!this.isDuplicateEvent(error)) throw error;
-      
-      const existingEvent = await this.eventModel
-        .findOne({ eventId: event.eventId })
-        .exec();
+
+      const existingEvent = await this.eventModel.findOne({ eventId: event.eventId }).exec();
 
       if (!existingEvent) throw error;
-      
+      this.logger.debug(`Event already exists eventId=${event.eventId}`);
       return {
         event: existingEvent,
         created: false,
@@ -50,9 +50,6 @@ export class EventsService {
       return false;
     }
 
-    return (
-      error.code === 11000 &&
-      error.keyPattern?.eventId === 1
-    );
+    return error.code === 11000 && error.keyPattern?.eventId === 1;
   }
 }

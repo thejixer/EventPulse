@@ -10,6 +10,11 @@ export type RuleMatchDocument = HydratedDocument<RuleMatch>;
 export class RuleSnapshot {
   @Prop({
     required: true,
+    trim: true,
+  })
+  name: string;
+  @Prop({
+    required: true,
     enum: Object.values(EventName),
   })
   eventName: EventName;
@@ -47,7 +52,7 @@ export class RuleMatch {
     type: Types.ObjectId,
     required: true,
   })
-  eventId: Types.ObjectId;
+  eventId: string;
 
   @Prop({
     required: true,
@@ -67,5 +72,6 @@ export class RuleMatch {
   })
   ruleSnapshot: RuleSnapshot;
 }
-
 export const RuleMatchSchema = SchemaFactory.createForClass(RuleMatch);
+// for idempotency of rule match submition
+RuleMatchSchema.index({ eventId: 1, ruleId: 1 }, { unique: true });

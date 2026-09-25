@@ -1,19 +1,13 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Channel, ChannelModel, connect, ConsumeMessage } from 'amqplib';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { IncomingEventDto } from './dto/incoming-event.dto'
+import { IncomingEventDto } from './dto/incoming-event.dto';
 import { EventsService } from './events.service';
+import { EventProcessingService } from './event-processing.service';
 @Injectable()
-export class EventConsumerService
-  implements OnModuleInit, OnModuleDestroy
-{
+export class EventConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(EventConsumerService.name);
 
   private connection!: ChannelModel;
@@ -25,7 +19,7 @@ export class EventConsumerService
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly eventsService: EventsService,
+    private readonly eventProcessingService: EventProcessingService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -40,8 +34,7 @@ export class EventConsumerService
   }
 
   private async connect(): Promise<void> {
-    const rabbitMqUrl =
-      this.configService.getOrThrow<string>('RABBITMQ_URL');
+    const rabbitMqUrl = this.configService.getOrThrow<string>('RABBITMQ_URL');
 
     this.connection = await connect(rabbitMqUrl);
     this.channel = await this.connection.createChannel();
@@ -60,15 +53,9 @@ export class EventConsumerService
       durable: true,
     });
 
-    await this.channel.bindQueue(
-      this.queue,
-      this.exchange,
-      this.routingKey,
-    );
+    await this.channel.bindQueue(this.queue, this.exchange, this.routingKey);
 
-    this.logger.log(
-      `RabbitMQ topology ready: exchange=${this.exchange} queue=${this.queue}`,
-    );
+    this.logger.log(`RabbitMQ topology ready: exchange=${this.exchange} queue=${this.queue}`);
   }
 
   private async startConsumer(): Promise<void> {
@@ -85,10 +72,9 @@ export class EventConsumerService
     this.logger.log(`Consuming messages from queue=${this.queue}`);
   }
 
-  private async handleMessage(message: ConsumeMessage | null,): Promise<void> {
-    
+  private async handleMessage(message: ConsumeMessage | null): Promise<void> {
     if (!message) return;
-    
+
     const rawPayload = message.content.toString();
 
     let payload: unknown;
@@ -111,23 +97,13 @@ export class EventConsumerService
       return;
     }
 
-    const result = await this.eventsService.create(event);
-
-    if (result.created) {
-      this.logger.log(
-        `Persisted event eventId=${event.eventId} mongoId=${result.event._id} agentId=${event.agentId}`,
-      );
-    } else {
-      this.logger.log(
-        `Event already persisted eventId=${event.eventId} agentId=${event.agentId}`,
-      );
-    }
+    // const result = await this.eventsService.create(event);
+    await this.eventProcessingService.process(event);
 
     this.channel.ack(message);
   }
 
   private async validateEvent(payload: unknown): Promise<IncomingEventDto | null> {
-    
     const event = plainToInstance(IncomingEventDto, payload);
 
     const errors = await validate(event, {
@@ -136,9 +112,7 @@ export class EventConsumerService
     });
 
     if (errors.length > 0) {
-      this.logger.warn(
-        `Invalid event: ${JSON.stringify(errors)}`,
-      );
+      this.logger.warn(`Invalid event: ${JSON.stringify(errors)}`);
 
       return null;
     }

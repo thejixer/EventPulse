@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Rule, RuleSchema } from './schemas/rule.schema';
 import { RulesController } from './rule.controller';
 import { RulesService } from './rule.service';
+import { RuleEvaluatorService } from './rule-evaluator.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { RulesService } from './rule.service';
     ]),
   ],
   controllers: [RulesController],
-  providers: [RulesService],
-  exports: [RulesService],
+  providers: [RulesService, RuleEvaluatorService],
+  exports: [RulesService, RuleEvaluatorService],
 })
 export class RulesModule {}

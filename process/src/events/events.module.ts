@@ -4,10 +4,13 @@ import { EventSchema, Event } from './schemas/event.schema';
 import { EventConsumerService } from './event-consumer.service';
 import { ConfigModule } from '@nestjs/config';
 import { EventsService } from './events.service';
+import { RulesModule } from '../rules/rules.module';
+import { EventProcessingService } from './event-processing.service';
+import { RuleMatchesModule } from '../rule-matches/rule-matches.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-     isGlobal: true,
+      isGlobal: true,
     }),
     MongooseModule.forFeature([
       {
@@ -15,10 +18,10 @@ import { EventsService } from './events.service';
         schema: EventSchema,
       },
     ]),
+    RulesModule,
+    RuleMatchesModule,
   ],
-  providers: [EventConsumerService, EventsService],
-  exports: [
-    EventsService,
-  ],
+  providers: [EventConsumerService, EventsService, EventProcessingService],
+  exports: [EventsService],
 })
 export class EventsModule {}
